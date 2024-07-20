@@ -22,88 +22,124 @@ const Crane: React.FC<CraneProps> = ({
   wrist_deg,
   gripper_mm,
 }) => {
-  const pillarRef = useRef<Group>(null);
-  const armRef = useRef<Group>(null);
-  const endEffectorRef = useRef<Mesh<BoxGeometry, Material>>(null);
 
-  useFrame(() => {
-    if (pillarRef.current) {
-      pillarRef.current.rotation.y = THREE.MathUtils.degToRad(swing_deg);
-    }
-    if (armRef.current) {
-      armRef.current.position.y = lift_mm / 1000; // Convert mm to meters for Three.js units
-    }
-    if (endEffectorRef.current) {
-      endEffectorRef.current.position.x = gripper_mm / 1000; // Convert mm to meters for Three.js units
-    }
-  });
+  const th1 = THREE.MathUtils.degToRad(swing_deg); // theta_1
+  const th3 = THREE.MathUtils.degToRad(elbow_deg); // theta_3
+  const th4 = THREE.MathUtils.degToRad(wrist_deg); // theta_4
 
-  // Base reference
-  const BASE_X = 0
-  const BASE_Y = 0
-  const BASE_Z = 0
-  // Crane measurements
+  const d2 = lift_mm / 1000; // d2
+
+  const gripper = gripper_mm / 1000;
+
+
+  // Model reference
+  const REF_X = 0
+  const REF_Y = 0
+  const REF_Z = 0
+
+
+
+  // We will map out the actuator references picked following the DH convention,
+  // and display them for debugging purposes.
+
+  const HELPER_AXES_LENGTH = 0.3
+
+  // For a basic crane representation, since we have a lot of freedom picking our
+  // actuator references (parallel z-axes), we can use the DH params to draw our
+  // basic crane blocks.
+
+  // Crane measurements. Using Dn/Rn/Tn for variable names may seem confusing here,
+  // but personally it helped me not make mistakes in the render code.
+
+  // We can use the <group> element to represent the next actuator ref. as:
+  // <group position={[r, d, 0]}, rotation={[alpha, theta, 0]}>
+
+  // Actuator parameters (these should match in the backend for IK to work)
+  // d1 = 0
+  const D2_MAX = 2 // PILLAR_HEIGHT
+  const D3 = -0.10 // ELBOW_DISPLACEMENT
+  const D4 = -0.5 // WRIST_DISPLACEMENT
+  // all thetas are variable or zero
+  // r1 = 0
+  // r2 = 0
+  const R3 = 0.6 // UPPER_ARM_LENGTH
+  const R4 = 0.6 // FOREARM_LENGTH
+  // all alphas are zero
+
+  // to do
+  const GRIPPER_DISPLACEMENT = 0.2
+
+  // cosmetic, these don't affect IK
   const BASE_WIDTH = 0.2
   const BASE_HEIGHT = 0.15
   const PILLAR_WIDTH = 0.1
-  const PILLAR_HEIGHT = 2
-  // to do:
-  const UPPER_ARM_WIDTH = 0.3
-  const UPPER_ARM_LENGTH = 0.1
-  const FOREARM_WIDTH = 10
-  const FOREARM_LENGTH = 10
-  const WRIST_WIDTH = 1
-  const WRIST_HEIGHT = 2
+  const UPPER_ARM_WIDTH = 0.15
+  const FOREARM_WIDTH = 0.10
+  const WRIST_1_WIDTH = 0.15
+  const WRIST_2_WIDTH = 0.15
 
   return (
-    <group position={[BASE_X, BASE_Y, BASE_Z]}>
-      {/* Static Base */}
+    <group position={[REF_X, REF_Y, REF_Z]}>
+      {/* Crane base reference (x0, y0, z0) */}
       <mesh>
+        {/* Simple reference box */}
         <boxGeometry args={[BASE_WIDTH, BASE_HEIGHT, BASE_WIDTH]} />
         <meshStandardMaterial color="grey" />
       </mesh>
-      {/* Pillar */}
-      <group ref={pillarRef}>
-        <mesh position={[0, PILLAR_HEIGHT/2, 0]}>
-          <boxGeometry args={[PILLAR_WIDTH, PILLAR_HEIGHT, PILLAR_WIDTH]} />
+
+      {/* Crane proper (x1, y1, z1) */}
+      <group rotation={[0, th1, 0]}>
+        <axesHelper args={[HELPER_AXES_LENGTH]} />
+        <mesh position={[0, D2_MAX/2, 0]}>
+          <boxGeometry args={[PILLAR_WIDTH, D2_MAX, PILLAR_WIDTH]} />
           <meshStandardMaterial color="lightgrey" />
         </mesh>
 
-        {/* Arm */}
-        <group ref={armRef} position={[0, lift_mm / 1000, 0]}>
-          <mesh position={[2, 0, 0]}>
-            <boxGeometry args={[4, 0.2, 0.2]} />
+        {/* Upper Arm (x2, y2, z2)*/}
+        <group position={[0, d2, 0]}>
+          <axesHelper args={[HELPER_AXES_LENGTH]} />
+          <mesh position={[R3/2, 0, 0]}>
+            <boxGeometry args={[R3, UPPER_ARM_WIDTH, UPPER_ARM_WIDTH]} />
             <meshStandardMaterial color="blue" />
           </mesh>
 
-          {/* End Effector */}
-          <mesh ref={endEffectorRef} position={[4, 0, 0]}>
-            <boxGeometry args={[0.5, 0.5, 0.5]} />
-            <meshStandardMaterial color="red" />
-          </mesh>
+          {/* Forearm (x3, y3, z3)*/}
+          <group position={[R3, D3, 0]} rotation={[0, th3, 0]}>
+            <axesHelper args={[HELPER_AXES_LENGTH]} />
+            <mesh position={[R4/2, 0, 0]}>
+              <boxGeometry args={[R4, FOREARM_WIDTH, FOREARM_WIDTH]} />
+              <meshStandardMaterial color="lightgreen" />
+            </mesh>
+
+            {/* Hand (x4, y4, z4*/}
+            <group position={[R4, D4, 0]} rotation={[0, th4, 0]}>
+              <axesHelper args={[HELPER_AXES_LENGTH]} />
+              <mesh position={[0, -D4/2, 0]}>
+                <boxGeometry args={[WRIST_1_WIDTH, D4, WRIST_1_WIDTH]} />
+                <meshStandardMaterial color="white" />
+              </mesh>
+              <mesh position={[GRIPPER_DISPLACEMENT/2, WRIST_2_WIDTH/2, 0]}>
+                <boxGeometry args={[GRIPPER_DISPLACEMENT, WRIST_2_WIDTH, WRIST_2_WIDTH]} />
+                <meshStandardMaterial color="white" />
+              </mesh>
+            </group>
+          </group>
         </group>
       </group>
     </group>
   );
 };
-const ThreeCanvas: React.FC = () => {
-  return (
-    <div className="relative w-full h-full">
-    <Canvas className="absolute inset-0" camera={{ position: [2, 1, 2]}}>
+
+const ThreeCanvas: React.FC<CraneProps> = (crane_props) => (
+  <div className="relative w-full h-full">
+    <Canvas className="absolute inset-0" camera={{ position: [2, 1, 2] }}>
       <ambientLight intensity={1} />
       {/* <pointLight position={[10, 10, 10]} intensity={1000} /> */}
-      <Crane
-        swing_deg={0}
-        lift_mm={1500}
-        elbow_deg={0}
-        wrist_deg={0}
-        gripper_mm={1000}
-      />
+      <Crane {...crane_props} />
       <OrbitControls />
       <axesHelper args={[5]} />
     </Canvas></div>
-  );
-};
+);
 
 export default ThreeCanvas;
 

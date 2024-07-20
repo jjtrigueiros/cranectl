@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import ThreeCanvas from "./components/ThreeCanvas"
 
 export default function Home() {
-  const [message, setMessage] = useState('');
+  const [craneState, setCraneState] = useState([0, 1000, 0, 0, 0]);
   const [inputValue, setInputValue] = useState('');
   const [ws, setWs] = useState<any | null>(null);
 
@@ -15,8 +15,10 @@ export default function Home() {
     };
 
     websocket.onmessage = (event) => {
+      // possible improvement: communicate with a mapping instead of a list so that we
+      // don't have to rely on the ordering
       console.log('Received:', event.data);
-      setMessage(event.data);
+      setCraneState(event.data.split(" ").map(Number));
     };
 
     websocket.onerror = (error) => {
@@ -44,11 +46,11 @@ export default function Home() {
   return (
     <div className='flex flex-col h-screen'>
       <div className='flex-grow flex justify-center items-center'>
-        <ThreeCanvas />
+        <ThreeCanvas swing_deg={craneState[0]} lift_mm={craneState[1]} elbow_deg={craneState[2]} wrist_deg={craneState[3]} gripper_mm={craneState[4]} />
       </div>
       <div className='h-1/5 flex justify-center items-center bg-green-500 text-white'>
         <h1 className="text-3xl font-bold underline">WebSocket Communication</h1>
-        <p>Message from server: {message}</p>
+        <p>Message from server: {" ".concat(craneState)}</p>
         <input
           type="text"
           className="text font-bold text-black"
