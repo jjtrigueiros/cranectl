@@ -1,11 +1,27 @@
 "use client";
 import { useEffect, useState } from 'react';
 import ThreeCanvas from "./components/ThreeCanvas"
+import ControlPanel from './components/ControlPanel';
+
+interface CraneState {
+  swing_deg: number;
+  lift_mm: number;
+  elbow_deg: number;
+  wrist_deg: number;
+  gripper_mm: number;
+}
+
 
 export default function Home() {
-  const [craneState, setCraneState] = useState([0, 1000, 0, 0, 0]);
-  const [inputValue, setInputValue] = useState('');
   const [ws, setWs] = useState<any | null>(null);
+  // default crane state before websocket connection is established
+  const [craneState, setCraneState] = useState<CraneState>({
+    swing_deg: 0,
+    lift_mm: 1000,
+    elbow_deg: 0,
+    wrist_deg: 0,
+    gripper_mm: 0,
+  });
 
   useEffect(() => {
     const websocket = new WebSocket('ws://127.0.0.1:8080');
@@ -15,10 +31,14 @@ export default function Home() {
     };
 
     websocket.onmessage = (event) => {
-      // possible improvement: communicate with a mapping instead of a list so that we
-      // don't have to rely on the ordering
-      console.log('Received:', event.data);
-      setCraneState(event.data.split(" ").map(Number));
+      const data = event.data.split(" ").map(Number);
+      setCraneState({
+        swing_deg: data[0],
+        lift_mm: data[1],
+        elbow_deg: data[2],
+        wrist_deg: data[3],
+        gripper_mm: data[4]
+      });
     };
 
     websocket.onerror = (error) => {
@@ -30,35 +50,48 @@ export default function Home() {
     };
 
     setWs(websocket);
-
-    return () => {
-      websocket.close();
-    };
+    return () => websocket.close();
   }, []);
 
-  const sendMessage = () => {
-    if (ws && inputValue) {
-      ws.send(inputValue);
-      setInputValue('');
+  const sendMessage = (message: string) => {
+    if (ws && message) {
+      ws.send(message);
     }
   };
 
+  const handleSpeedSubmit = (swing: number, lift: number, elbow: number, wrist: number, gripper: number) => {
+    sendMessage(`setspeed ${swing} ${lift} ${elbow} ${wrist} ${gripper}`)
+    // will be deprecated
+  }
+
+  const handleActuatorSubmit = () => {
+    // to do: actuator setpoints
+  }
+
+  const handlePositionSubmit = () => {
+    // to do: inverse kinematics
+  }
+
+  const handleOriginChange = () => {
+    // to do: origin change
+  }
+
   return (
-    <div className='flex flex-col h-screen'>
-      <div className='flex-grow flex justify-center items-center'>
-        <ThreeCanvas swing_deg={craneState[0]} lift_mm={craneState[1]} elbow_deg={craneState[2]} wrist_deg={craneState[3]} gripper_mm={craneState[4]} />
-      </div>
-      <div className='h-1/5 flex justify-center items-center bg-green-500 text-white'>
-        <h1 className="text-3xl font-bold underline">WebSocket Communication</h1>
-        <p>Message from server: {" ".concat(craneState)}</p>
-        <input
-          type="text"
-          className="text font-bold text-black"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Type a message"
+    <div className='grid h-screen grid-cols-1 grid-rows-1 md:grid-cols-5 md:grid-rows-1'>
+
+      <div className='col-span-4 row-span-1'>
+        <ThreeCanvas
+          swing_deg={craneState.swing_deg}
+          lift_mm={craneState.lift_mm}
+          elbow_deg={craneState.elbow_deg}
+          wrist_deg={craneState.wrist_deg}
+          gripper_mm={craneState.gripper_mm}
         />
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-5 py-2 mx-2 my-5 rounded" onClick={sendMessage}>Send Message</button>
+      </div>
+      <div className='col-span-1 row-span-1 p-4'>
+        <ControlPanel
+          onSpeedSubmit={handleSpeedSubmit}
+        />
       </div>
     </div>
   );
