@@ -5,15 +5,7 @@ import * as THREE from 'three';
 import { Group, Mesh, BoxGeometry, Material } from 'three';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-
-
-interface CraneProps {
-  swing_deg: number,
-  lift_mm: number,
-  elbow_deg: number,
-  wrist_deg: number,
-  gripper_mm: number,
-}
+import { CraneProps } from '@/interfaces/CraneProps';
 
 const Crane: React.FC<CraneProps> = ({
   swing_deg,
@@ -125,7 +117,7 @@ const Crane: React.FC<CraneProps> = ({
   );
 };
 
-const ThreeCanvas: React.FC<CraneProps> = (crane_props) => (
+const ThreeCanvas: React.FC<{ crane_props: CraneProps }> = ({ crane_props }) => (
   <div className="relative w-full h-full">
     <Canvas className="absolute inset-0" camera={{ position: [2, 1, 2] }}>
       <ambientLight intensity={1} />

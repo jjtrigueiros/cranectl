@@ -2,19 +2,12 @@
 import { useEffect, useState } from 'react';
 import ThreeCanvas from "./components/ThreeCanvas"
 import ControlPanel from './components/ControlPanel';
-
-interface CraneState {
-  swing_deg: number;
-  lift_mm: number;
-  elbow_deg: number;
-  wrist_deg: number;
-  gripper_mm: number;
-}
+import { CraneProps } from '@/interfaces/CraneProps';
 
 export default function Home() {
   const [ws, setWs] = useState<any | null>(null);
   // default crane state before websocket connection is established
-  const [craneState, setCraneState] = useState<CraneState>({
+  const [craneState, setCraneState] = useState<CraneProps>({
     swing_deg: 0,
     lift_mm: 1000,
     elbow_deg: 0,
@@ -71,19 +64,13 @@ export default function Home() {
   }
 
   return (
-    <div className='grid h-screen grid-cols-1 grid-rows-1 md:grid-cols-5 md:grid-rows-1'>
-
+    <div className='grid h-screen grid-cols-1 grid-rows-1 sm:grid-cols-5 sm:grid-rows-1'>
       <div className='col-span-4 row-span-1'>
-        <ThreeCanvas
-          swing_deg={craneState.swing_deg}
-          lift_mm={craneState.lift_mm}
-          elbow_deg={craneState.elbow_deg}
-          wrist_deg={craneState.wrist_deg}
-          gripper_mm={craneState.gripper_mm}
-        />
+        <ThreeCanvas crane_props={craneState} />
       </div>
-      <div className='col-span-1 row-span-1 p-4'>
+      <div className='col-span-1 row-span-1'>
         <ControlPanel
+          crane_props={craneState}
           onActuatorSetpointSubmit={handleActuatorSetpointSubmit}
           onPositionSubmit={handlePositionSubmit}
         />
