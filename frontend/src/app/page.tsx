@@ -61,15 +61,14 @@ export default function Home() {
 
   const handleSpeedSubmit = (swing: number, lift: number, elbow: number, wrist: number, gripper: number) => {
     sendMessage(`setspeed ${swing} ${lift} ${elbow} ${wrist} ${gripper}`)
-    // will be deprecated
   }
 
-  const handleActuatorSubmit = () => {
-    // to do: actuator setpoints
+  const handleActuatorSetpointSubmit = (swing: number, lift: number, elbow: number, wrist: number, gripper: number) => {
+    sendMessage(`setactuatorsetpoints ${swing} ${lift} ${elbow} ${wrist} ${gripper}`)
   }
 
-  const handlePositionSubmit = () => {
-    // to do: inverse kinematics
+  const handlePositionSubmit = (x: number, y: number, z:number) => {
+    sendMessage(`setpoint ${x} ${y} ${z}`)
   }
 
   const handleOriginChange = () => {
@@ -91,6 +90,8 @@ export default function Home() {
       <div className='col-span-1 row-span-1 p-4'>
         <ControlPanel
           onSpeedSubmit={handleSpeedSubmit}
+          onActuatorSetpointSubmit={handleActuatorSetpointSubmit}
+          onPositionSubmit={handlePositionSubmit}
         />
       </div>
     </div>

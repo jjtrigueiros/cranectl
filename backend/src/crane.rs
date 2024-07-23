@@ -1,154 +1,164 @@
 // Here we will build mock actuators and our mock crane.
 // In a real application, we would be reading from a sensor or performing some state estimation.
 
-trait Actuator {
-    fn get_position(&self) -> f64;
-    fn set_position(&mut self, position: f64);
-    fn get_velocity(&self) -> f64;
-    fn set_velocity(&mut self, speed: f64);
-    fn update_position(&mut self, dt: f64);
-}
-
-struct LinearActuator {
-    pos: f64,
-    lin_v: f64,
-    max_pos: f64,
-}
-
-impl LinearActuator {
-    pub fn new(starting_position: f64, max_position: f64) -> Self {
-        Self {
-            pos: starting_position,
-            lin_v: 0.0,
-            max_pos: max_position,
-        }
-    }
-}
-
-impl Actuator for LinearActuator {
-    fn get_position(&self) -> f64 {
-        self.pos
-    }
-
-    fn set_position(&mut self, position: f64) {
-        if position >= 0.0 && position <= self.max_pos {
-            self.pos = position;
-        } else {
-            println!("Angle out of range.")
-        }
-    }
-
-    fn get_velocity(&self) -> f64 {
-        self.lin_v
-    }
-
-    fn set_velocity(&mut self, speed: f64) {
-        self.lin_v = speed;
-    }
-
-    fn update_position(&mut self, dt: f64) {
-        let new_pos = self.pos + self.lin_v * dt;
-        self.pos = new_pos.max(self.max_pos)
-    }
-}
-
-struct RotaryActuator {
-    angle: f64,
-    ang_v: f64,
-    max_angle: f64,
-}
-
-impl RotaryActuator {
-    pub fn new(starting_angle: f64, max_angle: f64) -> Self {
-        Self {
-            angle: starting_angle,
-            ang_v: 0.0,
-            max_angle,
-        }
-    }
-}
-
-impl Actuator for RotaryActuator {
-    fn get_position(&self) -> f64 {
-        self.angle
-    }
-
-    fn set_position(&mut self, angle: f64) {
-        if angle >= 0.0 && angle <= self.max_angle {
-            self.angle = angle;
-        } else {
-            println!("Angle out of range.")
-        }
-    }
-
-    fn get_velocity(&self) -> f64 {
-        self.ang_v
-    }
-
-    fn set_velocity(&mut self, speed: f64) {
-        self.ang_v = speed;
-    }
-
-    fn update_position(&mut self, dt: f64) {
-        let new_pos = self.angle + self.ang_v * dt;
-        self.angle = new_pos.max(self.angle)
-    }
-}
-
-#[derive(Default)]
-struct Gripper {
-    aperture: f64,
-    speed: i32,
-}
-
-struct WorldOriginSensor {
-    x: f64,
-    y: f64,
-    z: f64
-}
+mod actuators;
+use actuators::{MockActuator, LinearActuator, RotaryActuator};
 
 pub struct Crane {
     lift: LinearActuator,
     swing: RotaryActuator,
     elbow: RotaryActuator,
     wrist: RotaryActuator,
-    gripper: Gripper,
+    gripper: LinearActuator,
+    d3: f64,
+    d4: f64,
+    r3: f64,
+    r4: f64,
 }
 
 impl Crane {
-    pub fn new() -> Self {
+    pub fn new(d2_max: f64, d3: f64, d4: f64, r3: f64, r4: f64) -> Self {
+        const GENERIC_ROTARY_KP: f64 = 3.0;
+        const GENERIC_ROTARY_KD: f64 = 5.0;
+
+        const GENERIC_LINEAR_KP: f64 = 2.5;
+        const GENERIC_LINEAR_KD: f64 = 3.0;
+
         Self {
-            lift: LinearActuator::new(0.0, 100.0),
-            swing: RotaryActuator::new(0.0, 90.0),
-            elbow: RotaryActuator::new(0.0, 90.0),
-            wrist: RotaryActuator::new(0.0, 90.0),
-            gripper: Gripper::default(),
+            swing: RotaryActuator::new(
+                0.0, -180.0, 180.0,
+                GENERIC_ROTARY_KP, 0.0, GENERIC_ROTARY_KD,
+            ),
+            lift: LinearActuator::new(
+                d2_max, 0.0, d2_max,
+                GENERIC_LINEAR_KP, 0.0, GENERIC_LINEAR_KD,
+            ),
+            elbow: RotaryActuator::new(
+                0.0, -180.0, 180.0,
+                GENERIC_ROTARY_KP, 0.0, GENERIC_ROTARY_KD,
+            ),
+            wrist: RotaryActuator::new(
+                0.0, -180.0, 180.0,
+                GENERIC_ROTARY_KP, 0.0, GENERIC_ROTARY_KD,
+            ),
+            gripper: LinearActuator::new(
+                0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0,
+            ),
+            d3,
+            d4,
+            r3,
+            r4,
         }
     }
 
     pub fn get_state(&self) -> CraneState {
         CraneState {
-            swing_deg: self.swing.angle,
-            lift_mm: self.lift.pos,
-            elbow_deg: self.elbow.angle,
-            wrist_deg: self.wrist.angle,
-            gripper_mm: self.gripper.aperture,
+            swing_deg: self.swing.get_position(),
+            lift_mm: self.lift.get_position() * 1000.0,
+            elbow_deg: self.elbow.get_position(),
+            wrist_deg: self.wrist.get_position(),
+            gripper_mm: self.gripper.get_position() * 1000.0,
         }
     }
 
-    pub fn set_state(&mut self, cs: CraneState) {
-        self.swing.angle = cs.swing_deg;
-        self.lift.pos = cs.lift_mm;
-        self.elbow.angle = cs.elbow_deg;
-        self.wrist.angle = cs.wrist_deg;
-        self.gripper.aperture = cs.gripper_mm;
+    pub fn set_velocity(&mut self, swing_v: f64, lift_v: f64, elbow_v: f64, wrist_v: f64, gripper_v: f64) {
+        self.swing.set_velocity(swing_v);
+        self.lift.set_velocity(lift_v);
+        self.elbow.set_velocity(elbow_v);
+        self.wrist.set_velocity(wrist_v);
+        self.gripper.set_velocity(gripper_v);
+    }
+
+    pub fn set_actuator_setpoints(&mut self, swing: f64, lift: f64, elbow: f64, wrist: f64, gripper: f64) {
+        self.swing.set_setpoint(swing);
+        self.lift.set_setpoint(lift);
+        self.elbow.set_setpoint(elbow);
+        self.wrist.set_setpoint(wrist);
+        self.gripper.set_setpoint(gripper)
+    }
+
+    pub fn update_state(&mut self, dt: f64) {
+        self.swing.update_state(dt);
+        self.lift.update_state(dt);
+        self.elbow.update_state(dt);
+        self.wrist.update_state(dt);
+        // to do: model/constrain gripper
+        // self.gripper.update_state(dt);
+    }
+
+    fn calculate_ik(&self, x: f64, y: f64, z: f64) -> Result<(f64, f64, f64), &'static str> {
+        let d2 = y - self.d3 - self.d4;
+        // take first solution
+        let (theta_1, theta_3) = ikcalc_2rmanip(z, x, self.r3, self.r4)?.0;
+        Ok((theta_1, d2, theta_3))
+    }
+
+    pub fn set_crane_setpoint(&mut self, x: f64, y: f64, z: f64) {
+        match self.calculate_ik(x, y, z) {
+            Ok((theta_1, d2, theta_3)) => {
+                self.swing.set_setpoint(theta_1);
+                self.lift.set_setpoint(d2);
+                self.elbow.set_setpoint(theta_3);
+            },
+            Err(msg) => println!("{}", msg)
+        }
     }
 }
 
 pub struct CraneState{
+    // The robotic crane is represented by the current actuator positions
+    // for each joint: swing rotation in degrees, lift elevation in mm,
+    // elbow rotation in degrees, wrist rotation in degrees, and gripper
+    // open/close state in mm.
     pub swing_deg: f64,
     pub lift_mm: f64,
     pub elbow_deg: f64,
     pub wrist_deg: f64,
     pub gripper_mm: f64,
+}
+
+fn ikcalc_2rmanip(x: f64, y: f64, l1: f64, l2: f64) -> Result<((f64, f64), (f64, f64)), &'static str> {
+    // Inverse kinematics solver for a 2R-manipulator.
+    // transform to polar coordinates:
+    let r_squared = x * x + y * y;
+    let phi = y.atan2(x);
+
+    let cos_theta2 = (r_squared - l1 * l1 - l2 * l2) / (2.0 * l1 * l2);
+    if cos_theta2.abs() > 1.0 {
+        return Err("No solution: unreachable position.");
+    }
+
+    let theta2 = cos_theta2.acos();
+    let solution_1 = {
+        let k1_1 = l1 + l2 * theta2.cos();
+        let k2_1 = l2 * theta2.sin();
+        let theta1 = phi - k2_1.atan2(k1_1);
+        (theta1.to_degrees(), theta2.to_degrees())
+    };
+
+    let theta2 = -theta2;
+    let solution_2 = {
+        let k1 = l1 + l2 * theta2.cos();
+        let k2 = l2 * theta2.sin();
+        let theta1 = phi - k2.atan2(k1);
+        (theta1.to_degrees(), theta2.to_degrees())
+    };
+
+    Ok((solution_1, solution_2))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ikcalc_2rmanip_basic() {
+        let l1 = 1.0;
+        let l2 = 1.0;
+        let x = 1.0;
+        let y = 1.0;
+
+        assert_eq!(ikcalc_2rmanip(x, y, l1, l2), Ok(((0.0, 90.0), (90.0, -90.0))));
+    }
 }
