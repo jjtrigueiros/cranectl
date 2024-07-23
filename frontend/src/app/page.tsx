@@ -11,7 +11,6 @@ interface CraneState {
   gripper_mm: number;
 }
 
-
 export default function Home() {
   const [ws, setWs] = useState<any | null>(null);
   // default crane state before websocket connection is established
@@ -59,10 +58,6 @@ export default function Home() {
     }
   };
 
-  const handleSpeedSubmit = (swing: number, lift: number, elbow: number, wrist: number, gripper: number) => {
-    sendMessage(`setspeed ${swing} ${lift} ${elbow} ${wrist} ${gripper}`)
-  }
-
   const handleActuatorSetpointSubmit = (swing: number, lift: number, elbow: number, wrist: number, gripper: number) => {
     sendMessage(`setactuatorsetpoints ${swing} ${lift} ${elbow} ${wrist} ${gripper}`)
   }
@@ -89,7 +84,6 @@ export default function Home() {
       </div>
       <div className='col-span-1 row-span-1 p-4'>
         <ControlPanel
-          onSpeedSubmit={handleSpeedSubmit}
           onActuatorSetpointSubmit={handleActuatorSetpointSubmit}
           onPositionSubmit={handlePositionSubmit}
         />

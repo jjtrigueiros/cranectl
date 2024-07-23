@@ -62,14 +62,6 @@ impl Crane {
         }
     }
 
-    pub fn set_velocity(&mut self, swing_v: f64, lift_v: f64, elbow_v: f64, wrist_v: f64, gripper_v: f64) {
-        self.swing.set_velocity(swing_v);
-        self.lift.set_velocity(lift_v);
-        self.elbow.set_velocity(elbow_v);
-        self.wrist.set_velocity(wrist_v);
-        self.gripper.set_velocity(gripper_v);
-    }
-
     pub fn set_actuator_setpoints(&mut self, swing: f64, lift: f64, elbow: f64, wrist: f64, gripper: f64) {
         self.swing.set_setpoint(swing);
         self.lift.set_setpoint(lift);

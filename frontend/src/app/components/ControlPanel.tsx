@@ -48,22 +48,11 @@ const NumberInputPanel: React.FC<InputPanelProps> = ({ title, fields, onSubmit }
 }
 
 const ControlPanel: React.FC<{
-    onSpeedSubmit: (swing: number, lift: number, elbow: number, wrist: number, gripper: number) => void;
     onActuatorSetpointSubmit: (swing: number, lift: number, elbow: number, wrist: number, gripper: number) => void;
     onPositionSubmit: (x: number, y: number, z: number) => void;
-}> = ({ onSpeedSubmit: onSpeedSubmit, onActuatorSetpointSubmit: onActuatorSetpointSubmit, onPositionSubmit: onPositionSubmit }) => {
+}> = ({ onActuatorSetpointSubmit: onActuatorSetpointSubmit, onPositionSubmit: onPositionSubmit }) => {
     return (
         <div className="w-full h-full p-4 flex flex-row md:flex-col bg-lime-600">
-            <NumberInputPanel
-                title="Speed Control"
-                fields={[
-                    { name: "swing", label: "Swing (deg./s)" },
-                    { name: "lift", label: "Lift (mm/s)"},
-                    { name: "elbow", label: "Elbow (deg./s)" },
-                    { name: "wrist", label: "Wrist (deg./s)" },
-                    { name: "gripper", label: "Gripper (mm/s)" },
-                ]}
-                onSubmit={(data) => onSpeedSubmit(data.swing, data.lift, data.elbow, data.wrist, data.gripper)} />
             <NumberInputPanel
                 title="Actuator Setpoints"
                 fields={[

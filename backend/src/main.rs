@@ -117,7 +117,6 @@ struct ServerSettings {
 }
 
 enum Command {
-    SetCraneVelocity { swing_v: f64, lift_v: f64, elbow_v: f64, wrist_v: f64, gripper_v: f64 },
     SetCraneActuatorSetpoints { swing_deg: f64, lift_m: f64, elbow_deg: f64, wrist_deg: f64, gripper_m: f64 },
     SetCraneSetpoint { x: f64, y: f64, z: f64 },
     SetRefresh { ms: u32 },
@@ -127,15 +126,6 @@ fn parse_command(command: &str) -> Result<Command, String> {
     let command_and_args: Vec<&str> = command.trim().split_whitespace().collect();
 
     match command_and_args.as_slice() {
-        ["setspeed", swing_v, lift_v, elbow_v, wrist_v, gripper_v] => {
-            Ok(Command::SetCraneVelocity{
-                swing_v: swing_v.parse::<f64>().map_err(|_| "Invalid swing velocity (pos. 1)")?,
-                lift_v: lift_v.parse::<f64>().map_err(|_| "Invalid lift velocity (pos. 2)")?,
-                elbow_v: elbow_v.parse::<f64>().map_err(|_| "Invalid elbow velocity (pos. 3)")?,
-                wrist_v: wrist_v.parse::<f64>().map_err(|_| "Invalid wrist velocity (pos. 4)")?,
-                gripper_v: gripper_v.parse::<f64>().map_err(|_| "Invalid gripper velocity (pos. 5)")?,
-            })
-        }
         ["setactuatorsetpoints", swing_deg, lift_mm, elbow_deg, wrist_deg, gripper_mm] => {
             let swing_deg = swing_deg.parse::<f64>().map_err(|_| "Invalid swing degrees (pos. 1)")?;
             let lift_mm = lift_mm.parse::<f64>().map_err(|_| "Invalid lift mm (pos. 2)")?;
@@ -167,10 +157,6 @@ fn parse_command(command: &str) -> Result<Command, String> {
 
 fn handle_command(command: Command, server_settings: &Arc<Mutex<ServerSettings>>, crane_arcmx: &Arc<Mutex<Crane>>) {
     match command {
-        Command::SetCraneVelocity { swing_v, lift_v, elbow_v, wrist_v, gripper_v } => {
-            let mut crane = crane_arcmx.lock().unwrap();
-            crane.set_velocity(swing_v, lift_v, elbow_v, wrist_v, gripper_v)
-        }
         Command::SetCraneActuatorSetpoints { swing_deg, lift_m, elbow_deg, wrist_deg, gripper_m } => {
             let mut crane = crane_arcmx.lock().unwrap();
             crane.set_actuator_setpoints(swing_deg, lift_m, elbow_deg, wrist_deg, gripper_m)
