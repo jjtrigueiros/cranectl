@@ -18,11 +18,10 @@ pub struct Crane {
 
 impl Crane {
     pub fn new(d2_max: f64, d3: f64, d4: f64, r3: f64, r4: f64) -> Self {
-        const GENERIC_ROTARY_KP: f64 = 3.0;
-        const GENERIC_ROTARY_KD: f64 = 5.0;
-
-        const GENERIC_LINEAR_KP: f64 = 2.5;
-        const GENERIC_LINEAR_KD: f64 = 3.0;
+        const GENERIC_ROTARY_KP: f64 = 20.0;
+        const GENERIC_ROTARY_KD: f64 = 15.0;
+        const GENERIC_LINEAR_KP: f64 = 14.0;
+        const GENERIC_LINEAR_KD: f64 = 9.5;
 
         Self {
             swing: RotaryActuator::new(
