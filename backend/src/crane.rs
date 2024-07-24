@@ -79,6 +79,7 @@ impl Crane {
     }
 
     fn calculate_ik(&self, x: f64, y: f64, z: f64) -> Result<(f64, f64, f64), &'static str> {
+        // needs work, fix for positions in quadrant III of the x, z plane
         let d2 = y - self.d3 - self.d4;
         // take first solution
         let (theta_1, theta_3) = ikcalc_2rmanip(z, x, self.r3, self.r4)?.0;

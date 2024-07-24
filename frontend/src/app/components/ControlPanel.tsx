@@ -99,7 +99,7 @@ const ControlPanel: React.FC<{
                 onSubmit={(data) => onActuatorSetpointSubmit(data.swing, data.lift, data.elbow, data.wrist, data.gripper)}
             />
             <NumberInputPanel
-                title="Crane Setpoint"
+                title="Crane Setpoint (wrist base)"
                 fields={[
                     { name: "x", label: "x (red)" },
                     { name: "y", label: "y (green)"},
