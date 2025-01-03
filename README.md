@@ -9,6 +9,12 @@ This is a demo project built to accomplish a few personal goals:
   - websockets
   - three.js
 
+The backend (Rust) simulates a 4-DOF crane equipped with a gripper (the gripper itself is not implemented). It stores the state of each of the crane's actuators and accepts control inputs: either setpoints for each of its individual actuators, or a single setpoint for the end actuator (in which case, the system will calculate the required position for each of its constituent actuators through inverse kinematics).
+
+The frontend (React, Typescript, three.js) is a simple webpage that allows us to visualize the crane state and send commands to the backend.
+
+The two components communicate via websockets: the backend exposes a server which the frontend will attempt to connect to on page load.
+
 Here's a [demo video](demo.webm) of the project in action.
 
 ## Running the project
