@@ -1,3 +1,15 @@
+# cranectl
+
+This is a demo project built to accomplish a few personal goals:
+- Brush up on some stuff I was already (at least somewhat) familiar with
+  - React (and Javascript in general)
+  - Rust
+  - Robotics (forward/inverse kinematics)
+- Learn about and use some new stuff I've been meaning to try:
+  - websockets
+  - three.js
+
+Here's a [demo video](demo.webm) of the project in action.
 
 ## Running the project
 ### Development
@@ -49,7 +61,3 @@ Wherever DH parameters are referenced, consider the variables:
 - d4: vertical displacement at the wrist joint (same for the forearm and the hand)
 - r3: horizontal displacement between the lift axis and the elbow rotation axis
 - r4: horizontal displacement between the elbow and wrist rotation axes
-
-## Demo
-
-[Demo video](demo.webm)
