@@ -17,6 +17,8 @@ The two components communicate via websockets: the backend exposes a server whic
 
 Here's a [demo video](demo.webm) of the project in action.
 
+![demo](demo.gif)
+
 ## Running the project
 ### Development
 Backend startup:
